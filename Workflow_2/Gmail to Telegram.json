@@ -1,0 +1,158 @@
+{
+  "name": "Gmail to Telegram",
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "filters": {}
+      },
+      "type": "n8n-nodes-base.gmailTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -416,
+        -48
+      ],
+      "id": "50ee70ac-3946-4e44-809f-a4311a5d449c",
+      "name": "Gmail Trigger",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "4uv7CnMFIeOHT1lA",
+          "name": "Gmail account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.snippet }}",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        -208,
+        -32
+      ],
+      "id": "94b8401e-58c7-4639-acf7-7e6a5546da95",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        -352,
+        128
+      ],
+      "id": "27fa9fa9-72c9-4ed2-90da-4664bd6a2961",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "0yoB55R1g6U4BpiT",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "6685857611",
+        "text": "={{$json[\"message\"]}}\n",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        240,
+        48
+      ],
+      "id": "2d338500-de8f-412b-87ef-3bf331699623",
+      "name": "Send a text message",
+      "webhookId": "0860241f-230d-4751-a515-19d3b76b80b4",
+      "credentials": {
+        "telegramApi": {
+          "id": "4DWkm78F150R1mAg",
+          "name": "Telegram account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Try to detect where the AI text is stored\nlet text =\n  $json?.choices?.[0]?.message?.content ||\n  $json?.text ||\n  $json?.response ||\n  JSON.stringify($json); // fallback in case structure is different\n\n// Split long messages into 4000-char chunks\nlet chunkSize = 4000;\nlet chunks = [];\n\nfor (let i = 0; i < text.length; i += chunkSize) {\n  chunks.push({\n    json: {\n      message: text.substring(i, i + chunkSize)\n    }\n  });\n}\n\nreturn chunks;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        208,
+        -192
+      ],
+      "id": "240583c9-795c-4412-aa91-dd88033da809",
+      "name": "Code in JavaScript"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Gmail Trigger": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Send a text message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "0826a9b9-6f0b-4e92-9464-479ad2eac4d2",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "3ed717c4cc85a3cbc8058fd4e97eb06815e4a9d9ee01b3be2785043b7cc80d08"
+  },
+  "id": "G65lxIEVHCADgYUR",
+  "tags": []
+}
